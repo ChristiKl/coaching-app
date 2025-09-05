@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import echoRouter from "./echo";
+import dayTypesRouter from "./routes/dayTypes";
+import exercisesRouter from "./routes/exercises";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,3 +21,7 @@ app.use("/echo", echoRouter);
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
 });
+
+app.use("/api/day-types", dayTypesRouter);
+
+app.use("/api/exercises", exercisesRouter);
