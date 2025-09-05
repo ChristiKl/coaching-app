@@ -1,61 +1,37 @@
 import { Router, Request, Response } from "express";
-import { randomUUID } from "crypto";
-import { Exercise, ExerciseSchema } from "../types/exercise";
+import { ExerciseSchema } from "../types/exercise";
 import { validate } from "../middleware/validate";
 import { AppError } from "../middleware/errors";
+import { exerciseRepo } from "../repo/exercises"
 
 const router = Router();
-const exercises: Exercise[] = [];
 
-// GET all
-router.get("/", (_req, res) => {
-  res.json({ data: exercises });
+router.get("/", async (_req, res) => {
+  const rows = await exerciseRepo.list();
+  res.json({ data: rows });
 });
 
-// POST create
-router.post("/", validate(ExerciseSchema), (req: Request, res: Response) => {
-  const body = req.body as Omit<Exercise, "id" | "createdAt">;
-  const item: Exercise = { id: randomUUID(), createdAt: new Date().toISOString(), ...body };
-
-  // const parsed = ExerciseSchema.safeParse(req.body);
-  // if (!parsed.success) {
-  //   return res.status(400).json({ error: "ValidationError", details: parsed.error.flatten() });
-  // }
-
-  // const item: Exercise = {
-  //   id: randomUUID(),
-  //   createdAt: new Date().toISOString(),
-  //   ...parsed.data,
-  // };
-
-  exercises.push(item);
-  res.status(201).json({ data: item });
+router.post("/", validate(ExerciseSchema), async (req: Request, res: Response) => {
+  const row = await exerciseRepo.create(req.body);
+  res.status(201).json({ data: row });
 });
 
-// PATCH update
-router.patch("/:id", validate(ExerciseSchema.partial()), (req: Request, res: Response) => {
-  const idx = exercises.findIndex((e) => e.id === req.params.id);
-  if (idx === -1) throw new AppError("NotFound", "Exercise not found", 404);
-  exercises[idx] = { ...exercises[idx], ...req.body as Partial<Exercise> };
-
-  // if (idx === -1) return res.status(404).json({ error: "NotFound" });
-
-  // const parsed = ExerciseSchema.partial().safeParse(req.body);
-  // if (!parsed.success) {
-  //   return res.status(400).json({ error: "ValidationError", details: parsed.error.flatten() });
-  // }
-
-  // exercises[idx] = { ...exercises[idx], ...parsed.data };
-  res.json({ data: exercises[idx] });
+router.patch("/:id", validate(ExerciseSchema.partial()), async (req: Request, res: Response) => {
+  try {
+    const row = await exerciseRepo.update(req.params.id, req.body);
+    res.json({ data: row });
+  } catch {
+    throw new AppError("NotFound", "Exercise not found", 404);
+  }
 });
 
-// DELETE
-router.delete("/:id", (req: Request, res: Response) => {
-  const idx = exercises.findIndex((e) => e.id === req.params.id);
-  if (idx === -1) throw new AppError("NotFound", "Exercise not found", 404);
-
-  const [deleted] = exercises.splice(idx, 1);
-  res.json({ data: deleted });
+router.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const row = await exerciseRepo.remove(req.params.id);
+    res.json({ data: row });
+  } catch {
+    throw new AppError("NotFound", "Exercise not found", 404);
+  }
 });
 
 export default router;

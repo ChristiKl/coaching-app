@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model DayType {
+  id        String   @id @default(uuid())
+  name      String
+  kcal      Int
+  protein   Int
+  carbs     Int
+  fat       Int
+  createdAt DateTime @default(now())
+}
+
+model Exercise {
+  id               String   @id @default(uuid())
+  name             String
+  primaryMuscles   Json               // e.g., ["quads","glutes"]
+  secondaryMuscles Json?              // e.g., ["hamstrings"]
+  equipment        Json?              // e.g., ["barbell","rack"]
+  instructions     String?
+  mediaUrl         String?
+  source           String   @default("local")
+  createdAt        DateTime @default(now())
+}
